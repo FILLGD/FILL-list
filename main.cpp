@@ -6,9 +6,8 @@
 
 using namespace geode::prelude;
 
-// DİKKAT: Bu adresin gerçekten JSON döndürmesi gerekiyor.
-static const std::string API_URL =
-    "https://fillgdlist.netlify.app/api/levels";
+static constexpr char const* API_URL =
+    "https://fillgdlist.netlify.app/.netlify/functions/levels";
 
 class LeaderboardPopup : public Popup<> {
 protected:
@@ -22,25 +21,26 @@ protected:
 
         auto size = m_mainLayer->getContentSize();
 
-        // Kaydırılabilir liste alanı
         m_scroll = ScrollLayer::create({
-            size.width - 40.f,
-            size.height - 95.f
+            size.width - 30.f,
+            size.height - 85.f
         });
 
-        m_scroll->setPosition({20.f, 35.f});
+        if (!m_scroll) {
+            return false;
+        }
+
+        m_scroll->setPosition({15.f, 40.f});
 
         m_scroll->m_contentLayer->setLayout(
             ColumnLayout::create()
                 ->setGap(5.f)
                 ->setAxisReverse(true)
-                ->setCrossAxisAlignment(AxisAlignment::Start)
                 ->setAutoGrowAxis(0.f)
         );
 
         m_mainLayer->addChild(m_scroll);
 
-        // Durum yazısı
         m_status = CCLabelBMFont::create(
             "Yukleniyor...",
             "bigFont.fnt"
@@ -49,37 +49,41 @@ protected:
         m_status->setScale(0.4f);
         m_status->setPosition({
             size.width / 2.f,
-            15.f
+            18.f
         });
 
         m_mainLayer->addChild(m_status);
 
-        // Web dinleyicisi
-        m_listener.bind([this](web::WebTask::Event* event) {
-            auto response = event->getValue();
+        m_listener.bind(
+            [this](web::WebTask::Event* event) {
+                if (!event) {
+                    return;
+                }
 
-            if (!response) {
-                return;
+                auto response = event->getValue();
+
+                if (!response) {
+                    return;
+                }
+
+                if (!response->ok()) {
+                    m_status->setString("Baglanti hatasi");
+                    return;
+                }
+
+                auto json = response->json();
+
+                if (!json) {
+                    m_status->setString("JSON okunamadi");
+                    return;
+                }
+
+                this->render(json.unwrap());
             }
-
-            if (!response->ok()) {
-                m_status->setString("Baglanti hatasi");
-                return;
-            }
-
-            auto json = response->json();
-
-            if (!json) {
-                m_status->setString("JSON okunamadi");
-                return;
-            }
-
-            this->render(json.unwrap());
-        });
+        );
 
         this->refresh(0.f);
 
-        // Otomatik yenileme
         auto seconds =
             Mod::get()->getSettingValue<int64_t>(
                 "refresh-seconds"
@@ -111,7 +115,7 @@ protected:
         auto array = data.asArray();
 
         if (!array) {
-            m_status->setString("Gecersiz JSON formati");
+            m_status->setString("Gecersiz JSON");
             return;
         }
 
@@ -119,23 +123,21 @@ protected:
 
         content->removeAllChildren();
 
-        auto width = m_scroll->getContentSize().width;
-
+        float width = m_scroll->getContentSize().width;
         int count = 0;
 
         for (auto const& item : array.unwrap()) {
             count++;
 
-            auto rank =
+            int rank =
                 item["rank"].asInt().unwrapOr(count);
 
-            auto name =
+            std::string name =
                 item["name"].asString().unwrapOr("?");
 
-            auto points =
+            int points =
                 item["points"].asInt().unwrapOr(0);
 
-            // Creator bilgisi string veya array olabilir.
             std::string creators = "?";
 
             if (auto value = item["creators"].asString()) {
@@ -154,7 +156,6 @@ protected:
                 }
             }
 
-            // Level satırı
             auto row = CCNode::create();
 
             row->setContentSize({
@@ -162,18 +163,14 @@ protected:
                 42.f
             });
 
-            // Level adı
             auto title = CCLabelBMFont::create(
-                fmt::format(
-                    "#{} {}",
-                    rank,
-                    name
-                ).c_str(),
+                fmt::format("#{} {}", rank, name).c_str(),
                 "bigFont.fnt"
             );
 
             title->setAnchorPoint({0.f, 0.5f});
             title->setPosition({6.f, 29.f});
+
             title->limitLabelWidth(
                 width - 100.f,
                 0.5f,
@@ -182,12 +179,8 @@ protected:
 
             row->addChild(title);
 
-            // Creator
             auto creatorLabel = CCLabelBMFont::create(
-                fmt::format(
-                    "by {}",
-                    creators
-                ).c_str(),
+                fmt::format("by {}", creators).c_str(),
                 "chatFont.fnt"
             );
 
@@ -203,17 +196,14 @@ protected:
 
             row->addChild(creatorLabel);
 
-            // Puan
             auto pointsLabel = CCLabelBMFont::create(
-                fmt::format(
-                    "{} pts",
-                    points
-                ).c_str(),
+                fmt::format("{} pts", points).c_str(),
                 "goldFont.fnt"
             );
 
             pointsLabel->setScale(0.45f);
             pointsLabel->setAnchorPoint({1.f, 0.5f});
+
             pointsLabel->setPosition({
                 width - 6.f,
                 21.f
