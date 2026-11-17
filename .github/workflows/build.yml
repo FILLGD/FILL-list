@@ -19,3 +19,5 @@ jobs:
         uses: geode-sdk/build-geode-mod@main
         with:
           sdk: "4.6.0"
+          bindings: "vwtfafa/bindings"
+          bindings-ref: "fix/2.2081-depends"        
