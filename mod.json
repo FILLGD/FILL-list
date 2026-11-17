@@ -1,0 +1,24 @@
+
+{
+    "geode": "4.6.0",
+    "gd": {
+        "win": "2.2081",
+        "android": "2.2081",
+        "mac": "2.2081",
+        "ios": "2.2081"
+    },
+    "id": "supergold99.fill-leaderboard",
+    "name": "FILL List",
+    "version": "1.0.0",
+    "developer": "Supergold99",
+    "description": "Ana menüden FILL (Fun Impossible Levels List) sıralamasını canlı gösterir.",
+    "settings": {
+        "refresh-seconds": {
+            "type": "int",
+            "name": "Yenileme süresi (sn)",
+            "default": 15,
+            "min": 5,
+            "max": 120
+        }
+    }
+}
