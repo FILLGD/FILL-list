@@ -5,11 +5,12 @@
 
 using namespace geode::prelude;
 
-static constexpr char const* RANKINGS_URL =
-    "https://fillgdlist.netlify.app/?embed=rankings";
+namespace {
+    constexpr const char* FILL_URL =
+        "https://fillgdlist.netlify.app/?embed=rankings";
+}
 
 class $modify(FillMenuLayer, MenuLayer) {
-
     bool init() {
         if (!MenuLayer::init()) {
             return false;
@@ -18,11 +19,16 @@ class $modify(FillMenuLayer, MenuLayer) {
         auto menu = this->getChildByID("bottom-menu");
 
         if (!menu) {
-            log::warn("FILL: bottom-menu bulunamadi!");
+            log::warn("FILL List: bottom-menu not found");
             return true;
         }
 
         auto sprite = ButtonSprite::create("FILL");
+
+        if (!sprite) {
+            log::error("FILL List: button sprite could not be created");
+            return true;
+        }
 
         auto button = CCMenuItemSpriteExtra::create(
             sprite,
@@ -30,7 +36,12 @@ class $modify(FillMenuLayer, MenuLayer) {
             menu_selector(FillMenuLayer::onFill)
         );
 
-        button->setID("fill-leaderboard-button");
+        if (!button) {
+            log::error("FILL List: button could not be created");
+            return true;
+        }
+
+        button->setID("fill-list-button");
 
         menu->addChild(button);
         menu->updateLayout();
@@ -39,6 +50,6 @@ class $modify(FillMenuLayer, MenuLayer) {
     }
 
     void onFill(CCObject*) {
-        web::openLinkInBrowser(RANKINGS_URL);
+        web::openLinkInBrowser(FILL_URL);
     }
 };
