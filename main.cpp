@@ -39,16 +39,6 @@ class $modify(FillMenuLayer, MenuLayer) {
     }
 
     void onFill(CCObject*) {
-        createQuickPopup(
-            "FILL List",
-            "Rankings sayfasini acmak istiyor musun?",
-            "Iptal",
-            "Ac",
-            [](auto, bool confirmed) {
-                if (confirmed) {
-                    web::openLinkInBrowser(RANKINGS_URL);
-                }
-            }
-        );
+        web::openLinkInBrowser(RANKINGS_URL);
     }
 };
